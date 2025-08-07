@@ -8,7 +8,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
 
-CHUNK_SIZE = 2
+CHUNK_SIZE = 1000
 
 
 def connect_to_db():
