@@ -49,7 +49,7 @@ def connect_to_db():
         raise RuntimeError(f"Помилка підключення до БД: {e}")
 
 
-def extract_books(engine, cutoff_date, last_proccessed_id):
+def extract_books(engine, cutoff_date, last_processed_id):
     """
     Витягнути книги з таблиці books де last_updated >= cutoff_date
 
@@ -76,7 +76,7 @@ def extract_books(engine, cutoff_date, last_proccessed_id):
         WHERE 
             last_updated >= :cutoff_date
             AND
-            book_id > :last_proccessed_id
+            book_id > :last_processed_id
         order by book_id
         LIMIT :limit
         """
@@ -88,7 +88,7 @@ def extract_books(engine, cutoff_date, last_proccessed_id):
             engine,
             params={
                 "cutoff_date": cutoff_date,
-                "last_proccessed_id": last_proccessed_id,
+                "last_processed_id": last_processed_id,
                 "limit": CHUNK_SIZE,
             },
         )
@@ -188,25 +188,25 @@ def main():
     engine = connect_to_db()
 
     # обробка записів відбувається пакетами розміром CHUNK_SIZE, щоб запобігти переповнення пам'яті
-    rows_proccessed = 0
-    last_proccessed_id = 0
-    df = extract_books(engine, cutoff_date, last_proccessed_id)
+    rows_processed = 0
+    last_processed_id = 0
+    df = extract_books(engine, cutoff_date, last_processed_id)
     while not df.empty:
-        last_proccessed_id = int(df["book_id"].max())
-        rows_proccessed += len(df)
+        last_processed_id = int(df["book_id"].max())
+        rows_processed += len(df)
         # трансформація згідно бізнес-правил
         transform_data(df)
         # збереження
         load_data(df, engine)
-        df = extract_books(engine, cutoff_date, last_proccessed_id)
+        df = extract_books(engine, cutoff_date, last_processed_id)
     else:
-        if rows_proccessed == 0:
+        if rows_processed == 0:
             print(
                 "Нових книг для обробки за вказану дату не знайдено. Роботу завершено."
             )
         else:
             print(
-                f"Загалом оброблено {rows_proccessed} записів. ETL процес завершено успішно"
+                f"Загалом оброблено {rows_processed} записів. ETL процес завершено успішно"
             )
 
 
