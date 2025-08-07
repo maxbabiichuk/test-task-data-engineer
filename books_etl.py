@@ -92,7 +92,7 @@ def extract_books(engine, cutoff_date, last_processed_id):
                 "limit": CHUNK_SIZE,
             },
         )
-        if (len(chunk) > 0):
+        if len(chunk) > 0:
             print(f"Витягнуто {len(chunk)} записів з таблиці books")
         return chunk
     except Exception as e:
