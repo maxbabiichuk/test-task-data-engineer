@@ -99,14 +99,6 @@ def extract_books(engine, cutoff_date, last_processed_id):
         raise RuntimeError(f"Помилка читання даних з books: {e}")
 
 
-def is_valid_date(date_string):
-    try:
-        datetime.strptime(date_string, "%Y-%m-%d")
-        return True
-    except ValueError:
-        return False
-
-
 def transform_data(df):
     """
     Трансформувати дані згідно бізнес-правил:
@@ -167,6 +159,14 @@ def load_data(df, engine):
         raise RuntimeError(f"Помилка збереження даних в books_processed: {e}")
 
 
+def is_valid_date(date_string):
+    try:
+        datetime.strptime(date_string, "%Y-%m-%d")
+        return True
+    except ValueError:
+        return False
+
+
 def main():
     """
     Головна функція:
@@ -185,6 +185,7 @@ def main():
         print(f"Неправильний формат дати: {cutoff_date}")
         sys.exit(1)
 
+    # Підключення до бази даних
     engine = connect_to_db()
 
     # обробка записів відбувається пакетами розміром CHUNK_SIZE, щоб запобігти переповнення пам'яті
@@ -198,6 +199,7 @@ def main():
         transform_data(df)
         # збереження
         load_data(df, engine)
+        # отримання наступного пакету даних
         df = extract_books(engine, cutoff_date, last_processed_id)
     else:
         if rows_processed == 0:
@@ -213,7 +215,8 @@ def main():
 if __name__ == "__main__":
     try:
         main()
+        sys.exit(0)
     except Exception as e:
         # Логування або алерт
         print(f"Помилка ETL: {e}")
-        exit(1)
+        sys.exit(1)
