@@ -4,14 +4,14 @@ import sys
 import pandas as pd
 import numpy as np
 from dotenv import load_dotenv, find_dotenv
-from sqlalchemy import create_engine, text
+from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
 
 CHUNK_SIZE = 1000
 
 
-def connect_to_db():
+def connect_to_db() -> Engine:
     """
     Створити SQLAlchemy engine для підключення до PostgreSQL
     Використовуйте environment variables для параметрів підключення
@@ -49,7 +49,9 @@ def connect_to_db():
         raise RuntimeError(f"Помилка підключення до БД: {e}")
 
 
-def extract_books(engine, cutoff_date, last_processed_id):
+def extract_books(
+    engine: Engine, cutoff_date: datetime, last_processed_id: int
+) -> pd.DataFrame:
     """
     Витягнути книги з таблиці books де last_updated >= cutoff_date
 
@@ -99,7 +101,7 @@ def extract_books(engine, cutoff_date, last_processed_id):
         raise RuntimeError(f"Помилка читання даних з books: {e}")
 
 
-def transform_data(df):
+def transform_data(df: pd.DataFrame) -> pd.DataFrame:
     """
     Трансформувати дані згідно бізнес-правил:
 
@@ -124,7 +126,7 @@ def transform_data(df):
     return df
 
 
-def load_data(df, engine):
+def load_data(df: pd.DataFrame, engine: Engine) -> None:
     """
     Зберегти оброблені дані в таблицю books_processed
 
@@ -159,7 +161,7 @@ def load_data(df, engine):
         raise RuntimeError(f"Помилка збереження даних в books_processed: {e}")
 
 
-def is_valid_date(date_string):
+def is_valid_date(date_string: str) -> bool:
     try:
         datetime.strptime(date_string, "%Y-%m-%d")
         return True
@@ -167,7 +169,7 @@ def is_valid_date(date_string):
         return False
 
 
-def main():
+def main() -> None:
     """
     Головна функція:
     1. Перевірити аргументи командного рядка (має бути рівно 1 - дата)
