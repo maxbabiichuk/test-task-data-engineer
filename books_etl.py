@@ -18,10 +18,11 @@ def connect_to_db() -> Engine:
     Поверніть engine об'єкт
     Обробіть помилки підключення
     """
-    if not find_dotenv():
+    dotenv_path = find_dotenv()
+    if not dotenv_path:
         print("Файл .env не знайдено в директорії з проектом. Це може бути проблемою.")
     else:
-        load_dotenv()
+        load_dotenv(dotenv_path)
 
     required_vars = ["DB_USER", "DB_PASSWORD", "DB_HOST", "DB_PORT", "DB_NAME"]
     missing = [var for var in required_vars if not os.getenv(var)]
@@ -42,7 +43,8 @@ def connect_to_db() -> Engine:
 
     try:
         engine = create_engine(connection_url)
-        engine.connect().execute(text("SELECT 1"))  # Тестове підключення
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))  # Тестове підключення
         print(f"Підключено до бази даних {db_name} успішно")
         return engine
     except SQLAlchemyError as e:
@@ -182,10 +184,10 @@ def main() -> None:
         print("Приклад: python books_etl.py 2025-01-01")
         sys.exit(1)
 
-    cutoff_date = sys.argv[1]
-    if not is_valid_date(cutoff_date):
-        print(f"Неправильний формат дати: {cutoff_date}")
+    if not is_valid_date(sys.argv[1]):
+        print(f"Неправильний формат дати: {sys.argv[1]}")
         sys.exit(1)
+    cutoff_date = datetime.strptime(sys.argv[1], "%Y-%m-%d")
 
     # Підключення до бази даних
     engine = connect_to_db()
@@ -198,20 +200,18 @@ def main() -> None:
         last_processed_id = int(df["book_id"].max())
         rows_processed += len(df)
         # трансформація згідно бізнес-правил
-        transform_data(df)
+        df = transform_data(df)
         # збереження
         load_data(df, engine)
         # отримання наступного пакету даних
         df = extract_books(engine, cutoff_date, last_processed_id)
+
+    if rows_processed == 0:
+        print("Нових книг для обробки за вказану дату не знайдено. Роботу завершено.")
     else:
-        if rows_processed == 0:
-            print(
-                "Нових книг для обробки за вказану дату не знайдено. Роботу завершено."
-            )
-        else:
-            print(
-                f"Загалом оброблено {rows_processed} записів. ETL процес завершено успішно"
-            )
+        print(
+            f"Загалом оброблено {rows_processed} записів. ETL процес завершено успішно"
+        )
 
 
 if __name__ == "__main__":
