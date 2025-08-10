@@ -19,10 +19,12 @@ def connect_to_db() -> Engine:
     Обробіть помилки підключення
     """
     dotenv_path = find_dotenv()
-    if not dotenv_path:
-        print("Файл .env не знайдено в директорії з проектом. Це може бути проблемою.")
-    else:
+    if dotenv_path:
         load_dotenv(dotenv_path)
+    # if not dotenv_path:
+    #     print("Файл .env не знайдено в директорії з проектом. Це може бути проблемою.")
+    # else:
+    #     load_dotenv(dotenv_path)
 
     required_vars = ["DB_USER", "DB_PASSWORD", "DB_HOST", "DB_PORT", "DB_NAME"]
     missing = [var for var in required_vars if not os.getenv(var)]
